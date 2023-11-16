@@ -1,0 +1,120 @@
+app WaspNotepadApp {
+  wasp: {
+    version: "^0.11.8"
+  },
+  title: "Wasp Notepad App",
+  head: [
+        "<meta property='og:type' content='website' />",
+        "<meta property='og:description' content='A notepad app.' />"
+  ],
+  db: {
+    system: PostgreSQL,
+    seeds: [
+      import { categorySeeds } from "@server/seeds/categorySeeds.js"
+    ]
+  },
+  auth: {
+    userEntity: User,
+    methods: {
+      usernameAndPassword: {}
+    },
+    onAuthFailedRedirectTo: "/auth/login"
+  },
+  dependencies: [
+    ("@tailwindcss/forms", "^0.5.3"),
+    ("@tailwindcss/typography", "^0.5.7"),
+    ("@fortawesome/fontawesome-svg-core", "^6.4.2"),
+    ("@fortawesome/react-fontawesome", "^0.2.0"),
+    ("@fortawesome/free-solid-svg-icons", "^6.4.2"),
+    ("daisyui", "^4.4.20")
+  ],
+}
+
+// MODELS
+entity Task {=psl
+    id          Int     @id @default(autoincrement())
+    description String
+    isDone      Boolean @default(false)
+    user        User?    @relation(fields: [userId], references: [id])
+    userId      Int?
+    category    Category @relation(fields: [categoryId], references: [id])
+    categoryId  Int
+psl=}
+
+entity User {=psl
+    id       Int    @id @default(autoincrement())
+    username String @unique
+    password String
+    tasks    Task[]
+    isAdmin  Boolean @default(false)
+psl=}
+
+entity Category {=psl
+  id   Int    @id @default(autoincrement())
+  name String
+  tasks Task[] 
+psl=}
+// END OF MODELS
+
+// AUTO CRUD
+crud Categories {
+  entity: Category,
+  operations: {
+    getAll: {},
+    get: {},
+    create: {},
+    update: {},
+    delete: {},
+  },
+}
+// END OF AUTO CRUD
+
+// QUERIES
+query getAllUserTasksQuery {
+  fn: import { getAllUserTasksQuery } from "@server/tasks/getAllUserTasksQuery.js",
+  entities: [Task]
+}
+// END OF QUERIES
+
+// ACTIONS (COMMANDS)
+action createTaskCommand {
+  fn: import { createTaskCommand } from "@server/tasks/createTaskCommand.js",
+  entities: [Task]
+}
+
+action updateTaskCommand {
+  fn: import { updateTaskCommand } from "@server/tasks/updateTaskCommand.js",
+  entities: [Task]
+}
+
+action deleteTaskCommand {
+  fn: import { deleteTaskCommand } from "@server/tasks/deleteTaskCommand.js",
+  entities: [Task]
+}
+// END OF ACTIONS (COMMANDS)
+
+// ROUTES
+route HomeRoute { path: "/", to: HomePage }
+route HealthRoute { path: "/health/:name?", to: HealthPage }
+route SignupRoute { path: "/auth/signup", to: SignupPage }
+route LoginRoute { path: "/auth/login", to: LoginPage }
+// END OF ROUTES
+
+// PAGES
+page HomePage {
+  authRequired: true,
+  component: import HomePage from "@client/pages/index.tsx"
+}
+
+page HealthPage {
+  component: import HealthPage from "@client/pages/health/HealthPage.tsx"
+}
+
+page SignupPage {
+  component: import SignupPage from "@client/pages/auth/SignupPage.tsx"
+}
+
+page LoginPage {
+  component: import LoginPage from "@client/pages/auth/LoginPage.tsx"
+}
+// END OF PAGES
